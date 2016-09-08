@@ -5,7 +5,7 @@
 # Notes: OneinStack for CentOS/RadHat 5+ Debian 6+ and Ubuntu 12+
 #
 # Project home page:
-#       http://oneinstack.com
+#       https://oneinstack.com
 #       https://github.com/lj2007331/oneinstack
 
 Mem=`free -m | awk '/Mem:/{print $2}'`
@@ -39,7 +39,7 @@ Make-swapfile() {
     mkswap /swapfile
     swapon /swapfile
     chmod 600 /swapfile
-    [ -z "`grep swapfile /etc/fstab`"] && cat >> /etc/fstab << EOF
+    [ -z "`grep swapfile /etc/fstab`" ] && cat >> /etc/fstab << EOF
 /swapfile    swap    swap    defaults    0 0
 EOF
 

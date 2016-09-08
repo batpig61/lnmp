@@ -5,22 +5,26 @@
 # Notes: OneinStack for CentOS/RadHat 5+ Debian 6+ and Ubuntu 12+
 #
 # Project home page:
-#       http://oneinstack.com
+#       https://oneinstack.com
 #       https://github.com/lj2007331/oneinstack
 
-Install_jemalloc()
-{
+Install_jemalloc() {
 cd $oneinstack_dir/src
-src_url=https://github.com/jemalloc/jemalloc/releases/download/$jemalloc_version/jemalloc-$jemalloc_version.tar.bz2 && Download_src
+src_url=http://mirrors.linuxeye.com/oneinstack/src/jemalloc-$jemalloc_version.tar.bz2 && Download_src
 
 tar xjf jemalloc-$jemalloc_version.tar.bz2
 cd jemalloc-$jemalloc_version
-./configure
-make && make install
+LDFLAGS="${LDFLAGS} -lrt" ./configure
+make -j ${THREAD} && make install
 if [ -f "/usr/local/lib/libjemalloc.so" ];then
+    if [ "$OS_BIT" == '64' -a "$OS" == 'CentOS' ];then
+        ln -s /usr/local/lib/libjemalloc.so.2 /usr/lib64/libjemalloc.so.1
+    else
+        ln -s /usr/local/lib/libjemalloc.so.2 /usr/lib/libjemalloc.so.1
+    fi
     echo '/usr/local/lib' > /etc/ld.so.conf.d/local.conf
     ldconfig
-    echo "${CSUCCESS}jemalloc module install successfully! ${CEND}"
+    echo "${CSUCCESS}jemalloc module installed successfully! ${CEND}"
     cd ..
     rm -rf jemalloc-$jemalloc_version
 else

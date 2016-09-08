@@ -1,26 +1,29 @@
-This script is written using the shell, in order to quickly deploy `LEMP`/`LAMP`/`LNMP`/`LNMPA`(Linux, Nginx/Tengine, MySQL in a production environment/MariaDB/Percona, PHP), applicable to CentOS 5~7(including RedHat), Debian 6~8, Ubuntu 12.04~15.04 of 32 and 64.
+[![PayPal donate button](https://img.shields.io/badge/paypal-donate-green.svg)](https://paypal.me/yeho)[![支付宝捐助按钮](https://img.shields.io/badge/%E6%94%AF%E4%BB%98%E5%AE%9D-%E5%90%91TA%E6%8D%90%E5%8A%A9-green.svg)](https://static.oneinstack.com/images/alipay.png)[![微信捐助按钮](https://img.shields.io/badge/%E5%BE%AE%E4%BF%A1-%E5%90%91TA%E6%8D%90%E5%8A%A9-green.svg)](https://static.oneinstack.com/images/weixin.png)
+
+This script is written using the shell, in order to quickly deploy `LEMP`/`LAMP`/`LNMP`/`LNMPA`(Linux, Nginx/Tengine/OpenResty, MySQL in a production environment/MariaDB/Percona, PHP), applicable to CentOS 5~7(including redhat), Debian 6~8, Ubuntu 12~16 of 32 and 64. 
 
 Script properties:
 - Continually updated
 - Source compiler installation, most stable source is the latest version, and download from the official site
 - Some security optimization
-- Providing a plurality of database versions (MySQL-5.6, MySQL-5.5, MariaDB-10.0, MariaDB-5.5, Percona-5.6, Percona-5.5)
-- Providing multiple PHP versions (php-5.3, php-5.4, php-5.5, php-5.6, php-7/phpng(RC))
-- Provide Nginx, Tengine
+- Providing a plurality of database versions (MySQL-5.7, MySQL-5.6, MySQL-5.5, MariaDB-10.1, MariaDB-10.0, MariaDB-5.5,Percona-5.7, Percona-5.6, Percona-5.5)
+- Providing multiple PHP versions (php-7, php-5.6, php-5.5, php-5.4, php-5.3)
+- Provide Nginx, Tengine, OpenResty
 - Providing a plurality of Apache version (Apache-2.4, Apache-2.2)
 - According to their needs to install PHP Cache Accelerator provides ZendOPcache, xcache, apcu, eAccelerator. And php encryption and decryption tool ionCube, ZendGuardLoader
 - Installation Pureftpd, phpMyAdmin according to their needs
 - Install memcached, redis according to their needs
 - Tcmalloc can use according to their needs or jemalloc optimize MySQL, Nginx
-- Providing add a virtual host script
+- Providing add a virtual host script, include Let's Encrypt SSL certificate
 - Provide Nginx/Tengine, MySQL/MariaDB/Percona, PHP, Redis, phpMyAdmin upgrade script
 - Provide local backup and remote backup (rsync between servers) script
 - Provided under HHVM install CentOS 6,7
 
 ## How to use
+
 If your server system: CentOS/Redhat (Do not enter "//" and "// subsequent sentence)
 ```bash
-yum -y install wget screen   // For CentOS / Redhat
+yum -y install wget screen python   // For CentOS / Redhat
 wget http://mirrors.linuxeye.com/lnmp-full.tar.gz   // Contains the source code
 tar xzf lnmp-full.tar.gz
 cd lnmp    // If you need to modify the directory (installation, data storage, Nginx logs), modify options.conf file
@@ -29,12 +32,19 @@ screen -S lnmp    // if network interruption, you can execute the command `scree
 ```
 If your server system: Debian/Ubuntu (Do not enter "//" and "// subsequent sentence)
 ```bash
-apt-get -y install wget screen    // For Debian / Ubuntu
+apt-get -y install wget screen python   // For Debian / Ubuntu
 wget http://mirrors.linuxeye.com/lnmp-full.tar.gz   // Contains the source code
 tar xzf lnmp-full.tar.gz
 cd lnmp    // If you need to modify the directory (installation, data storage, Nginx logs), modify options.conf file
 screen -S lnmp    // if network interruption, you can execute the command `screen -r lnmp` reconnect install window
 ./install.sh   // Do not sh install.sh or bash install.sh such execution
+```
+
+## How to add Extensions
+
+```bash
+cd ~/oneinstack    // Must enter the directory execution under oneinstack
+./addons.sh    // Do not sh addons.sh or bash addons.sh such execution
 ```
 
 ## How to add a virtual host
@@ -69,7 +79,8 @@ crontab -l    // Can be added to scheduled tasks, such as automatic backups ever
 ```
 
 ## How to manage service
-Nginx/Tengine:
+
+Nginx/Tengine/OpenResty:
 ```bash
 service nginx {start|stop|status|restart|reload|configtest}
 ```
@@ -103,6 +114,7 @@ service memcached {start|stop|status|restart|reload}
 ```
 
 ## How to upgrade 
+
 ```bash
 ./upgrade.sh
 ```
@@ -114,6 +126,7 @@ service memcached {start|stop|status|restart|reload}
 ```
 
 ## Installation
+
 Follow the instructions in [Wiki Installation page](https://github.com/lj2007331/lnmp/wiki/Installation)<br />
 
 For feedback, questions, and to follow the progress of the project (Chinese): <br />

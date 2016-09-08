@@ -5,16 +5,16 @@
 # Notes: OneinStack for CentOS/RadHat 5+ Debian 6+ and Ubuntu 12+
 #
 # Project home page:
-#       http://oneinstack.com
+#       https://oneinstack.com
 #       https://github.com/lj2007331/oneinstack
 
 echo=echo
 for cmd in echo /bin/echo; do
-	$cmd >/dev/null 2>&1 || continue
-	if ! $cmd -e "" | grep -qE '^-e'; then
-		echo=$cmd
-		break
-	fi
+    $cmd >/dev/null 2>&1 || continue
+    if ! $cmd -e "" | grep -qE '^-e'; then
+        echo=$cmd
+        break
+    fi
 done
 CSI=$($echo -e "\033[")
 CEND="${CSI}0m"

@@ -5,25 +5,24 @@
 # Notes: OneinStack for CentOS/RadHat 5+ Debian 6+ and Ubuntu 12+
 #
 # Project home page:
-#       http://oneinstack.com
+#       https://oneinstack.com
 #       https://github.com/lj2007331/oneinstack
 
-Install_Apache-2-4()
-{
+Install_Apache-2-4() {
 cd $oneinstack_dir/src
-src_url=http://downloads.sourceforge.net/project/pcre/pcre/$pcre_version/pcre-$pcre_version.tar.gz && Download_src
-src_url=http://archive.apache.org/dist/apr/apr-$apr_version.tar.gz && Download_src 
-src_url=http://archive.apache.org/dist/apr/apr-util-$apr_util_version.tar.gz && Download_src 
-src_url=http://www.apache.org/dist/httpd/httpd-$apache_4_version.tar.gz && Download_src 
+src_url=http://mirrors.linuxeye.com/oneinstack/src/pcre-$pcre_version.tar.gz && Download_src
+src_url=http://archive.apache.org/dist/apr/apr-$apr_version.tar.gz && Download_src
+src_url=http://archive.apache.org/dist/apr/apr-util-$apr_util_version.tar.gz && Download_src
+src_url=http://mirrors.linuxeye.com/apache/httpd/httpd-$apache_4_version.tar.gz && Download_src
 
 tar xzf pcre-$pcre_version.tar.gz
 cd pcre-$pcre_version
 ./configure
-make && make install
+make -j ${THREAD} && make install
 cd ..
 
 id -u $run_user >/dev/null 2>&1
-[ $? -ne 0 ] && useradd -M -s /sbin/nologin $run_user 
+[ $? -ne 0 ] && useradd -M -s /sbin/nologin $run_user
 
 tar xzf httpd-$apache_4_version.tar.gz
 tar xzf apr-$apr_version.tar.gz
@@ -32,10 +31,11 @@ cd httpd-$apache_4_version
 [ ! -d "$apache_install_dir" ] && mkdir -p $apache_install_dir
 /bin/cp -R ../apr-$apr_version ./srclib/apr
 /bin/cp -R ../apr-util-$apr_util_version ./srclib/apr-util
-./configure --prefix=$apache_install_dir --enable-headers --enable-deflate --enable-mime-magic --enable-so --enable-rewrite --enable-ssl --with-ssl --enable-expires --enable-static-support --enable-suexec --disable-userdir --with-included-apr --with-mpm=prefork --disable-userdir
-make && make install
+[ "$ZendGuardLoader_yn" == 'y' -o "$ionCube_yn" == 'y' ] && MPM=prefork || MPM=worker
+./configure --prefix=$apache_install_dir --enable-headers --enable-deflate --enable-mime-magic --enable-so --enable-rewrite --enable-ssl --with-ssl --enable-expires --enable-static-support --enable-suexec --disable-userdir --with-included-apr --with-mpm=$MPM --disable-userdir
+make -j ${THREAD} && make install
 if [ -e "$apache_install_dir/conf/httpd.conf" ];then
-    echo "${CSUCCESS}Apache install successfully! ${CEND}"
+    echo "${CSUCCESS}Apache installed successfully! ${CEND}"
     cd ..
     rm -rf httpd-$apache_4_version
 else
@@ -44,7 +44,7 @@ else
     kill -9 $$
 fi
 
-[ -z "`grep ^'export PATH=' /etc/profile`" ] && echo "export PATH=$apache_install_dir/bin:\$PATH" >> /etc/profile 
+[ -z "`grep ^'export PATH=' /etc/profile`" ] && echo "export PATH=$apache_install_dir/bin:\$PATH" >> /etc/profile
 [ -n "`grep ^'export PATH=' /etc/profile`" -a -z "`grep $apache_install_dir /etc/profile`" ] && sed -i "s@^export PATH=\(.*\)@export PATH=$apache_install_dir/bin:\1@" /etc/profile
 . /etc/profile
 
@@ -52,26 +52,26 @@ fi
 sed -i '2a # chkconfig: - 85 15' /etc/init.d/httpd
 sed -i '3a # description: Apache is a World Wide Web server. It is used to serve' /etc/init.d/httpd
 chmod +x /etc/init.d/httpd
-OS_CentOS='chkconfig --add httpd \n
-chkconfig httpd on'
-OS_Debian_Ubuntu='update-rc.d httpd defaults'
-OS_command
+[ "$OS" == 'CentOS' ] && { chkconfig --add httpd; chkconfig httpd on; }
+[[ $OS =~ ^Ubuntu$|^Debian$ ]] && update-rc.d httpd defaults
 
 sed -i "s@^User daemon@User $run_user@" $apache_install_dir/conf/httpd.conf
 sed -i "s@^Group daemon@Group $run_user@" $apache_install_dir/conf/httpd.conf
-if [ "$Nginx_version" == '3' ];then
+if [ "$Nginx_version" == '4' -a ! -e "$web_install_dir/sbin/nginx" ];then
     sed -i 's/^#ServerName www.example.com:80/ServerName 0.0.0.0:80/' $apache_install_dir/conf/httpd.conf
     TMP_PORT=80
     TMP_IP=$IPADDR
-elif [ "$Nginx_version" == '1' -o "$Nginx_version" == '2' -o -e "$web_install_dir/sbin/nginx" ];then
-    sed -i 's/^#ServerName www.example.com:80/ServerName 127.0.0.1:9090/' $apache_install_dir/conf/httpd.conf
-    sed -i 's@^Listen.*@Listen 127.0.0.1:9090@' $apache_install_dir/conf/httpd.conf
-    TMP_PORT=9090
+elif [[ $Nginx_version =~ ^[1-3]$ ]] || [ -e "$web_install_dir/sbin/nginx" ];then
+    sed -i 's/^#ServerName www.example.com:80/ServerName 127.0.0.1:88/' $apache_install_dir/conf/httpd.conf
+    sed -i 's@^Listen.*@Listen 127.0.0.1:88@' $apache_install_dir/conf/httpd.conf
+    TMP_PORT=88
     TMP_IP=127.0.0.1
 fi
 sed -i "s@AddType\(.*\)Z@AddType\1Z\n    AddType application/x-httpd-php .php .phtml\n    AddType application/x-httpd-php-source .phps@" $apache_install_dir/conf/httpd.conf
+sed -i "s@#AddHandler cgi-script .cgi@AddHandler cgi-script .cgi .pl@" $apache_install_dir/conf/httpd.conf
 sed -i 's@^#LoadModule rewrite_module@LoadModule rewrite_module@' $apache_install_dir/conf/httpd.conf
 sed -i 's@^#LoadModule\(.*\)mod_deflate.so@LoadModule\1mod_deflate.so@' $apache_install_dir/conf/httpd.conf
+sed -i 's@^#LoadModule\(.*\)mod_ssl.so@LoadModule\1mod_ssl.so@' $apache_install_dir/conf/httpd.conf
 sed -i 's@DirectoryIndex index.html@DirectoryIndex index.html index.php@' $apache_install_dir/conf/httpd.conf
 sed -i "s@^DocumentRoot.*@DocumentRoot \"$wwwroot_dir/default\"@" $apache_install_dir/conf/httpd.conf
 sed -i "s@^<Directory \"$apache_install_dir/htdocs\">@<Directory \"$wwwroot_dir/default\">@" $apache_install_dir/conf/httpd.conf
@@ -98,31 +98,44 @@ cat >> $apache_install_dir/conf/vhost/0.conf << EOF
 <VirtualHost *:$TMP_PORT>
     ServerAdmin admin@linuxeye.com
     DocumentRoot "$wwwroot_dir/default"
-    ServerName $TMP_IP 
+    ServerName $TMP_IP
     ErrorLog "$wwwlogs_dir/error_apache.log"
     CustomLog "$wwwlogs_dir/access_apache.log" common
 <Directory "$wwwroot_dir/default">
     SetOutputFilter DEFLATE
-    Options FollowSymLinks
+    Options FollowSymLinks ExecCGI
     Require all granted
     AllowOverride All
     Order allow,deny
     Allow from all
     DirectoryIndex index.html index.php
 </Directory>
+<Location /server-status>
+    SetHandler server-status
+    Order Deny,Allow
+    Deny from all
+    Allow from 127.0.0.1
+</Location>
 </VirtualHost>
 EOF
 
 cat >> $apache_install_dir/conf/httpd.conf <<EOF
+<IfModule mod_headers.c>
+    AddOutputFilterByType DEFLATE text/html text/plain text/css text/xml text/javascript
+    <FilesMatch "\.(js|css|html|htm|png|jpg|swf|pdf|shtml|xml|flv|gif|ico|jpeg)\$">
+        RequestHeader edit "If-None-Match" "^(.*)-gzip(.*)\$" "\$1\$2"
+        Header edit "ETag" "^(.*)-gzip(.*)\$" "\$1\$2"
+    </FilesMatch>
+    DeflateCompressionLevel 6
+    SetOutputFilter DEFLATE
+</IfModule>
+
 ServerTokens ProductOnly
 ServerSignature Off
-AddOutputFilterByType DEFLATE text/html text/plain text/css text/xml text/javascript
-DeflateCompressionLevel 6
-SetOutputFilter DEFLATE
 Include conf/vhost/*.conf
 EOF
 
-if [ "$Nginx_version" != '3' ];then
+if [ "$Nginx_version" != '4' -o -e "$web_install_dir/sbin/nginx" ];then
     cat > $apache_install_dir/conf/extra/httpd-remoteip.conf << EOF
 LoadModule remoteip_module modules/mod_remoteip.so
 RemoteIPHeader X-Forwarded-For
@@ -131,6 +144,7 @@ EOF
     sed -i "s@Include conf/extra/httpd-mpm.conf@Include conf/extra/httpd-mpm.conf\nInclude conf/extra/httpd-remoteip.conf@" $apache_install_dir/conf/httpd.conf
     sed -i "s@LogFormat \"%h %l@LogFormat \"%h %a %l@g" $apache_install_dir/conf/httpd.conf
 fi
+ldconfig
 service httpd start
 cd ..
 }

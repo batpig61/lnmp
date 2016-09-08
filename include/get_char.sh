@@ -5,10 +5,10 @@
 # Notes: OneinStack for CentOS/RadHat 5+ Debian 6+ and Ubuntu 12+
 #
 # Project home page:
-#       http://oneinstack.com
+#       https://oneinstack.com
 #       https://github.com/lj2007331/oneinstack
 
-get_char(){
+get_char() {
     SAVEDSTTY=`stty -g`
     stty -echo
     stty cbreak

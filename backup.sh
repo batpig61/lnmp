@@ -5,7 +5,7 @@
 # Notes: OneinStack for CentOS/RadHat 5+ Debian 6+ and Ubuntu 12+
 #
 # Project home page:
-#       http://oneinstack.com
+#       https://oneinstack.com
 #       https://github.com/lj2007331/oneinstack
 
 cd tools
@@ -39,23 +39,31 @@ WEB_Local_BK() {
 WEB_Remote_BK() {
     for W in `echo $website_name | tr ',' ' '`
     do
-        echo "file:::$wwwroot_dir/$W $backup_dir push" >> config_bakcup.txt
+        if [ `du -sm "$wwwroot_dir/$WebSite" | awk '{print $1}'` -lt 1024 ];then
+            ./website_bk.sh $W
+            Web_GREP="Web_${W}_`date +%Y`"
+            Web_FILE=`ls -lrt $backup_dir | grep ${Web_GREP} | tail -1 | awk '{print $NF}'`
+            echo "file:::$backup_dir/$Web_FILE $backup_dir push" >> config_bakcup.txt
+            echo "com:::[ -e "$backup_dir/$Web_FILE" ] && rm -rf $backup_dir/Web_${W}_$(date +%Y%m%d --date="$expired_days days ago")_*.tgz" >> config_bakcup.txt
+        else
+            echo "file:::$wwwroot_dir/$W $backup_dir push" >> config_bakcup.txt
+        fi
     done
 }
 
-if [ "$local_bankup_yn" == 'y' -a "$remote_bankup_yn" == 'n' ];then
-    WEB_Local_BK
-    DB_Local_BK
-elif [ "$local_bankup_yn" == 'n' -a "$remote_bankup_yn" == 'y' ];then
+if [ "$backup_destination" == 'local' ];then
+    [ -n "`echo $backup_content | grep -ow db`" ] && DB_Local_BK
+    [ -n "`echo $backup_content | grep -ow web`" ] && WEB_Local_BK
+elif [ "$backup_destination" == 'remote' ];then
     echo "com:::[ ! -e "$backup_dir" ] && mkdir -p $backup_dir" > config_bakcup.txt
-    DB_Remote_BK
-    WEB_Remote_BK
+    [ -n "`echo $backup_content | grep -ow db`" ] && DB_Remote_BK
+    [ -n "`echo $backup_content | grep -ow web`" ] && WEB_Remote_BK
     ./mabs.sh -c config_bakcup.txt -T -1 | tee mabs.log
-elif [ "$local_bankup_yn" == 'y' -a "$remote_bankup_yn" == 'y' ];then
+elif [ "$backup_destination" == 'local,remote' ];then
     echo "com:::[ ! -e "$backup_dir" ] && mkdir -p $backup_dir" > config_bakcup.txt
-    WEB_Local_BK
-    WEB_Remote_BK
-    DB_Local_BK
-    DB_Remote_BK
-    ./mabs.sh -c config_bakcup.txt -T -1 | tee mabs.log	
+    [ -n "`echo $backup_content | grep -ow db`" ] && DB_Local_BK
+    [ -n "`echo $backup_content | grep -ow web`" ] && WEB_Local_BK
+    [ -n "`echo $backup_content | grep -ow db`" ] && DB_Remote_BK
+    [ -n "`echo $backup_content | grep -ow web`" ] && WEB_Remote_BK
+    ./mabs.sh -c config_bakcup.txt -T -1 | tee mabs.log
 fi
